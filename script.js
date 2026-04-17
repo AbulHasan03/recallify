@@ -1,46 +1,39 @@
 /* ============================================================
-   RECALLIFY — script.js  (Supabase Edition)
-   Replaces all localStorage logic with Supabase calls.
-   Requires: @supabase/supabase-js loaded before this file.
+   RECALLIFY — script.js
+   Supabase edition — all localStorage replaced with Supabase.
+   Original structure, variable names, and UI logic preserved.
+
+   SETUP: Replace SUPABASE_URL and SUPABASE_ANON below with
+   the values from: Supabase Dashboard → Project Settings → API
    ============================================================ */
 
 'use strict';
 
 
 // ============================================================
-// SECTION 1 — SUPABASE CONFIGURATION
-// ▸ Where: Top of file, before anything else
-// ▸ What:  Initialises the Supabase client used for all DB
-//          and auth calls throughout the app.
-// ▸ Action: Replace the two placeholder strings below with
-//           your real values from:
-//           Supabase Dashboard → Project Settings → API
+// SUPABASE — initialise client
 // ============================================================
 
 const SUPABASE_URL  = 'https://nfwvcswubmtqkinuelvz.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_qP1Awe5vRUOkUxxO6JkrNQ_RIeGMj60';
 
-// window.supabase is injected by the CDN <script> tag in index.html
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 
 // ============================================================
-// SECTION 2 — APP STATE
-// ▸ currentUser holds { id, name, email } of the signed-in user.
-//   id is the UUID from auth.users — used as user_id FK in DB.
+// STATE
 // ============================================================
 
 let currentUser         = null;  // { id, name, email }
-let activeRecallEntryId = null;  // UUID of content row being recalled
-let lastLoggedId        = null;  // UUID of content row just logged
-let selectedScore       = null;  // integer 1–5 chosen in recall modal
-let pendingDeleteId     = null;  // UUID of content row awaiting delete
-let currentFilter       = 'All'; // active filter in Library view
+let activeRecallEntryId = null;  // UUID string of content row being recalled
+let lastLoggedId        = null;  // UUID string of content row just saved
+let selectedScore       = null;  // integer 1–5
+let pendingDeleteId     = null;  // UUID string awaiting delete confirm
+let currentFilter       = 'All';
 
 
 // ============================================================
-// SECTION 3 — DOM REFERENCES
-// No changes from original — all IDs match index.html exactly
+// ELEMENT REFERENCES  (unchanged from original)
 // ============================================================
 
 const authScreen = document.getElementById('auth-screen');
@@ -111,19 +104,18 @@ const deleteConfirm = document.getElementById('delete-confirm');
 
 
 // ============================================================
-// SECTION 4 — INITIALISATION
-// ▸ What:  Supabase stores the JWT session in localStorage
-//          automatically. We call getSession() to check if the
-//          user is already logged in when the page loads —
-//          no manual session management needed.
+// INIT
+// Replaces: loadSession() from localStorage.
+// Supabase persists the JWT in localStorage automatically and
+// restores it on page load via getSession().
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check for an existing Supabase session (survives page refresh)
+
+  // Check if user already has an active session (survives refresh)
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) {
-    // User is already signed in — restore their profile
     const meta = session.user.user_metadata;
     currentUser = {
       id:    session.user.id,
@@ -133,7 +125,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     enterApp();
   }
 
-  // Listen for auth state changes (login / logout from any tab)
+  // If the session expires or the user signs out in another tab,
+  // automatically return them to the auth screen.
   supabase.auth.onAuthStateChange((_event, session) => {
     if (!session && currentUser) {
       currentUser = null;
@@ -146,12 +139,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 // ============================================================
-// SECTION 5 — EVENT BINDINGS
+// EVENTS  (structure identical to original)
 // ============================================================
 
 function bindEvents() {
 
-  // ---- Auth toggle (UI only) ----
+  // Auth toggle
   btnLogin.addEventListener('click', () => {
     btnLogin.classList.add('active');
     btnSignup.classList.remove('active');
@@ -166,7 +159,7 @@ function bindEvents() {
     loginForm.classList.add('hidden');
   });
 
-  // ---- Auth submit ----
+  // Auth submit
   document.getElementById('login-submit').addEventListener('click', handleLogin);
   document.getElementById('login-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleLogin();
@@ -177,7 +170,7 @@ function bindEvents() {
     if (e.key === 'Enter') handleSignup();
   });
 
-  // ---- Navigation ----
+  // Navigation
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       switchView(btn.dataset.view);
@@ -185,18 +178,18 @@ function bindEvents() {
     });
   });
 
-  // ---- Sign out ----
+  // Sign out
   signoutBtn.addEventListener('click', signOut);
   signoutBtnMob.addEventListener('click', signOut);
 
-  // ---- Mobile sidebar ----
+  // Mobile sidebar
   menuBtn.addEventListener('click', () => {
     sidebar.classList.add('open');
     sidebarOverlay.classList.remove('hidden');
   });
   sidebarOverlay.addEventListener('click', closeSidebar);
 
-  // ---- Content type selector ----
+  // Content type selector
   typeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       typeBtns.forEach(b => b.classList.remove('active'));
@@ -204,16 +197,16 @@ function bindEvents() {
     });
   });
 
-  // ---- Log submit ----
+  // Log submit
   logSubmit.addEventListener('click', handleLogSubmit);
 
-  // ---- After log success ----
+  // After log success
   recallNowBtn.addEventListener('click', () => {
     if (lastLoggedId) openRecallModal(lastLoggedId);
   });
   logAnotherBtn.addEventListener('click', resetLogForm);
 
-  // ---- Library filters ----
+  // Library filters
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
@@ -223,7 +216,7 @@ function bindEvents() {
     });
   });
 
-  // ---- Recall modal ----
+  // Recall modal
   modalClose.addEventListener('click', closeRecallModal);
   recallModal.addEventListener('click', e => {
     if (e.target === recallModal) closeRecallModal();
@@ -257,7 +250,7 @@ function bindEvents() {
     switchView('library');
   });
 
-  // ---- Delete modal ----
+  // Delete modal
   deleteCancel.addEventListener('click', () => {
     deleteModal.classList.add('hidden');
     pendingDeleteId = null;
@@ -274,11 +267,11 @@ function bindEvents() {
     }
   });
 
-  // ---- Keyboard: Escape closes modals ----
+  // Escape closes modals
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!recallModal.classList.contains('hidden')) closeRecallModal();
-    if (!deleteModal.classList.contains('hidden'))  {
+    if (!deleteModal.classList.contains('hidden')) {
       deleteModal.classList.add('hidden');
       pendingDeleteId = null;
     }
@@ -287,21 +280,13 @@ function bindEvents() {
 
 
 // ============================================================
-// SECTION 6 — AUTHENTICATION
-// ▸ Replaces: handleLogin, handleSignup, signOut, loadSession
-// ▸ Schema match:
-//   #signup-name     → user_metadata.name  (stored on auth.users)
-//   #signup-email    → auth.users.email
-//   #signup-password → auth.users (hashed by Supabase, never stored in your tables)
-//   #login-email     → auth.users.email
-//   #login-password  → verified by Supabase auth
+// AUTH HANDLERS
+// Replaces: handleLogin, handleSignup, signOut, saveSession,
+//           clearSession, loadSession — all localStorage logic gone.
 // ============================================================
 
-/**
- * SIGN UP
- * supabase.auth.signUp() creates the user in auth.users.
- * `options.data` is stored as user_metadata on the auth.users row.
- */
+// SIGN UP — creates user in Supabase auth.users.
+// Name is stored in user_metadata so we can retrieve it on login.
 async function handleSignup() {
   const name  = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim();
@@ -319,33 +304,21 @@ async function handleSignup() {
 
   setLoading(document.getElementById('signup-submit'), true);
 
-  // SUPABASE AUTH: create the user account
   const { data, error } = await supabase.auth.signUp({
     email,
     password: pass,
-    options: {
-      data: { name }  // saved to user_metadata.name — retrieved on login
-    }
+    options: { data: { name } },  // saved to user_metadata.name
   });
 
   setLoading(document.getElementById('signup-submit'), false);
 
   if (error) { showError(signupError, error.message); return; }
 
-  currentUser = {
-    id:    data.user.id,
-    email: data.user.email,
-    name,
-  };
-
+  currentUser = { id: data.user.id, email: data.user.email, name };
   enterApp();
 }
 
-/**
- * SIGN IN
- * supabase.auth.signInWithPassword() validates credentials,
- * returns a session JWT that Supabase stores in localStorage automatically.
- */
+// SIGN IN — validates credentials, Supabase stores the JWT automatically.
 async function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-password').value;
@@ -356,11 +329,7 @@ async function handleLogin() {
 
   setLoading(document.getElementById('login-submit'), true);
 
-  // SUPABASE AUTH: authenticate
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: pass,
-  });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
 
   setLoading(document.getElementById('login-submit'), false);
 
@@ -376,11 +345,7 @@ async function handleLogin() {
   enterApp();
 }
 
-/**
- * SIGN OUT
- * supabase.auth.signOut() clears the JWT from localStorage
- * and invalidates the session server-side.
- */
+// SIGN OUT — clears the Supabase JWT and returns to auth screen.
 async function signOut() {
   await supabase.auth.signOut();
   currentUser = null;
@@ -399,16 +364,14 @@ function enterApp() {
   authScreen.classList.add('hidden');
   authScreen.classList.remove('active');
   appScreen.classList.remove('hidden');
-
   userNameDisplay.textContent = currentUser.name;
   userAvatar.textContent      = currentUser.name.charAt(0).toUpperCase();
-
   switchView('dashboard');
 }
 
 
 // ============================================================
-// SECTION 7 — NAVIGATION
+// NAVIGATION  (unchanged from original)
 // ============================================================
 
 function switchView(viewName) {
@@ -416,16 +379,12 @@ function switchView(viewName) {
     v.classList.remove('active');
     v.classList.add('hidden');
   });
-
   const target = views[viewName];
   if (target) {
     target.classList.remove('hidden');
     target.classList.add('active');
   }
-
-  navBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.view === viewName);
-  });
+  navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewName));
 
   if (viewName === 'dashboard') renderDashboard();
   if (viewName === 'library')   renderLibrary();
@@ -439,25 +398,18 @@ function closeSidebar() {
 
 
 // ============================================================
-// SECTION 8 — LOG CONTENT (INSERT)
-// ▸ Replaces: handleLogSubmit (was writing to localStorage)
-// ▸ Schema match — frontend field → DB column (content table):
-//   #content-title       → title        TEXT NOT NULL
-//   .type-btn.active     → type         TEXT ('Video'|'Article'|'Other')
-//   #content-link        → link         TEXT NULL
-//   #content-notes       → notes        TEXT NULL
-//   currentUser.id       → user_id      UUID FK → auth.users
-//   (Postgres auto)      → id           UUID PK (gen_random_uuid())
-//   (Postgres auto)      → created_at   TIMESTAMPTZ (NOW())
-// ▸ NO mismatch: the old `entry.createdAt` (camelCase) is now
-//   `entry.created_at` (snake_case) matching the DB column.
-//   The renderDashboard/Library functions use `entry.created_at`.
+// LOG CONTENT
+// Replaces: handleLogSubmit writing to localStorage.
+// Now inserts a row into the `content` table in Supabase.
+//
+// Field mapping (frontend → database column):
+//   #content-title    → content.title        TEXT NOT NULL
+//   .type-btn.active  → content.type         TEXT ('Video'|'Article'|'Other')
+//   #content-link     → content.link         TEXT NULL
+//   #content-notes    → content.notes        TEXT NULL
+//   currentUser.id    → content.user_id      UUID (FK → auth.users)
 // ============================================================
 
-/**
- * INSERT into public.content
- * .select().single() returns the inserted row so we capture its UUID.
- */
 async function handleLogSubmit() {
   const title = contentTitle.value.trim();
   const link  = contentLink.value.trim();
@@ -470,24 +422,25 @@ async function handleLogSubmit() {
 
   setLoading(logSubmit, true);
 
-  // SUPABASE DB: insert one row into public.content
+  // Insert into public.content — returns the new row so we get its UUID
   const { data, error } = await supabase
     .from('content')
     .insert({
-      user_id: currentUser.id,   // UUID — FK to auth.users.id
-      title,                      // TEXT NOT NULL
-      type,                       // TEXT — must match CHECK constraint
-      link:  link  || null,       // TEXT NULL
-      notes: notes || null,       // TEXT NULL
+      user_id: currentUser.id,
+      title,
+      type,
+      link:  link  || null,
+      notes: notes || null,
     })
-    .select()   // return the inserted row
-    .single();  // expect exactly one row
+    .select()
+    .single();
 
   setLoading(logSubmit, false);
 
   if (error) { showError(logError, error.message); return; }
 
-  lastLoggedId = data.id; // UUID — used by "Recall Now" button
+  // Save the new row's UUID so "Recall Now" knows which entry to open
+  lastLoggedId = data.id;
 
   logFormCard.classList.add('hidden');
   logSuccess.classList.remove('hidden');
@@ -509,22 +462,20 @@ function resetLogForm() {
 
 
 // ============================================================
-// SECTION 9 — FETCH USER DATA (SELECT with JOIN)
-// ▸ Replaces: getUserEntries() + getEntries().filter(...)
-// ▸ What: One query joins content ↔ recall_entries via FK.
-//   Supabase handles the join using the column name as the
-//   nested object key. RLS ensures only the user's rows return.
-// ▸ Return shape (normalised for the rest of the app):
-//   {
-//     id, title, type, link, notes, created_at,  ← content columns
-//     recall: { text, score, date, id } | null    ← most recent recall
-//   }
+// FETCH USER DATA
+// Replaces: getEntries() + getUserEntries() from localStorage.
+// Fetches content rows joined with their recall_entries via FK.
+//
+// Returns an array shaped the same as before so all render
+// functions work without changes:
+//   entry.id, entry.title, entry.type, entry.link,
+//   entry.notes, entry.created_at
+//   entry.recall → null  OR  { text, score, date, id }
 // ============================================================
 
 async function getUserEntries() {
   if (!currentUser) return [];
 
-  // SUPABASE DB: join content with its recall_entries
   const { data, error } = await supabase
     .from('content')
     .select(`
@@ -541,38 +492,36 @@ async function getUserEntries() {
         created_at
       )
     `)
-    .eq('user_id', currentUser.id)              // RLS also enforces this
-    .order('created_at', { ascending: false });  // newest content first
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
 
   if (error) { console.error('Fetch error:', error.message); return []; }
 
-  // Normalise: flatten the most recent recall_entry onto each content row
+  // Flatten: attach the most recent recall as entry.recall (or null)
   return (data || []).map(entry => {
-    // recall_entries is sorted by Supabase insert order; take first (most recent)
-    const latestRecall = (entry.recall_entries || [])[0] || null;
+    const r = (entry.recall_entries || [])[0] || null;
     return {
       ...entry,
-      recall: latestRecall
-        ? {
-            id:    latestRecall.id,
-            text:  latestRecall.response_text,   // DB: response_text → app: text
-            score: latestRecall.recall_score,     // DB: recall_score  → app: score
-            date:  latestRecall.created_at,       // DB: created_at    → app: date
-          }
-        : null,
+      recall: r ? {
+        id:    r.id,
+        text:  r.response_text,
+        score: r.recall_score,
+        date:  r.created_at,
+      } : null,
     };
   });
 }
 
 
 // ============================================================
-// SECTION 10 — DASHBOARD RENDER
-// ▸ Now async — awaits getUserEntries()
-// ▸ Uses entry.created_at (snake_case, from DB)
+// DASHBOARD
+// Replaces: synchronous renderDashboard reading localStorage.
+// Now async — awaits getUserEntries().
+// Uses entry.created_at (snake_case from DB, was entry.createdAt).
 // ============================================================
 
 async function renderDashboard() {
-  recentList.innerHTML = '<p class="empty-state">Loading...</p>';
+  recentList.innerHTML = '<p class="empty-state">Loading…</p>';
 
   const entries  = await getUserEntries();
   const recalled = entries.filter(e => e.recall);
@@ -593,7 +542,7 @@ async function renderDashboard() {
 
   insightText.textContent = generateInsight(entries);
 
-  const recent = entries.slice(0, 5); // already newest-first
+  const recent = entries.slice(0, 5);
   recentList.innerHTML = recent.length === 0
     ? '<p class="empty-state">Nothing logged yet. Start by logging some content!</p>'
     : recent.map(recentItemHTML).join('');
@@ -648,19 +597,19 @@ function generateInsight(entries) {
   const allScores = recalled.map(e => e.recall.score);
   const avg = allScores.reduce((a, b) => a + b, 0) / allScores.length;
   if (avg >= 4) return `Great retention! Your average recall score is ${avg.toFixed(1)}/5. Keep it up!`;
-  if (avg >= 3) return `Solid progress! Average recall: ${avg.toFixed(1)}/5. Reviewing notes right after consuming content can help push this higher.`;
+  if (avg >= 3) return `Solid progress! Average recall: ${avg.toFixed(1)}/5. Reviewing notes right after consuming content can push this higher.`;
   return `Your average recall is ${avg.toFixed(1)}/5. Try jotting down key ideas immediately — even a few keywords help.`;
 }
 
 
 // ============================================================
-// SECTION 11 — LIBRARY RENDER
-// ▸ Now async — awaits getUserEntries()
-// ▸ Uses entry.created_at (snake_case from DB)
+// LIBRARY
+// Replaces: synchronous renderLibrary reading localStorage.
+// Now async — awaits getUserEntries().
 // ============================================================
 
 async function renderLibrary() {
-  libraryList.innerHTML = '<p class="empty-state">Loading...</p>';
+  libraryList.innerHTML = '<p class="empty-state">Loading…</p>';
 
   let entries = await getUserEntries();
 
@@ -677,7 +626,7 @@ async function renderLibrary() {
 
   libraryList.innerHTML = entries.map(libraryItemHTML).join('');
 
-  // Expand/collapse body on header click
+  // Expand/collapse on header click
   libraryList.querySelectorAll('.library-item-header').forEach(header => {
     header.addEventListener('click', e => {
       if (e.target.closest('button')) return;
@@ -685,7 +634,7 @@ async function renderLibrary() {
     });
   });
 
-  // "Recall Now" inline buttons (inside expanded body)
+  // Recall buttons inside expanded body
   libraryList.querySelectorAll('.btn-recall-inline').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -693,7 +642,7 @@ async function renderLibrary() {
     });
   });
 
-  // Recall icon button (in header)
+  // Recall icon buttons in header
   libraryList.querySelectorAll('.icon-btn[data-action="recall"]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -701,7 +650,7 @@ async function renderLibrary() {
     });
   });
 
-  // Delete icon button
+  // Delete icon buttons
   libraryList.querySelectorAll('.icon-btn[data-action="delete"]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -762,11 +711,10 @@ function buildLibraryBody(entry) {
   }
 
   if (entry.recall) {
+    const recallDate = formatDate(entry.recall.date);
     html += `
       <div class="recall-detail-section" style="margin-top:${entry.notes ? '1rem' : '0'}">
-        <div class="recall-detail-label">
-          Active Recall · ${formatDate(entry.recall.date)} · Score: ${entry.recall.score}/5
-        </div>
+        <div class="recall-detail-label">Active Recall · ${recallDate} · Score: ${entry.recall.score}/5</div>
         <div class="recall-text">${escapeHtml(entry.recall.text)}</div>
       </div>
     `;
@@ -784,22 +732,23 @@ function buildLibraryBody(entry) {
 
 
 // ============================================================
-// SECTION 12 — RECALL MODAL
-// ▸ openRecallModal: accepts UUID string (was integer from Date.now())
-// ▸ handleRecallSubmit: INSERT into recall_entries
-// ▸ Schema match — frontend field → DB column (recall_entries):
-//   activeRecallEntryId  → content_id    UUID FK → content.id
-//   currentUser.id       → user_id       UUID FK → auth.users
-//   recallInput.value    → response_text TEXT NOT NULL
-//   selectedScore        → recall_score  INTEGER CHECK (1–5)
-//   (Postgres auto)      → id            UUID PK
-//   (Postgres auto)      → created_at    TIMESTAMPTZ
+// RECALL MODAL
+// Replaces: openRecallModal (was reading from localStorage).
+// Now fetches the entry title directly from Supabase.
+// IDs are now UUID strings instead of integers (Date.now()).
+//
+// handleRecallSubmit replaces the localStorage array mutation.
+// Now inserts into the `recall_entries` table:
+//   recallInput.value  → recall_entries.response_text  TEXT NOT NULL
+//   selectedScore      → recall_entries.recall_score   INTEGER (1–5)
+//   activeRecallEntryId→ recall_entries.content_id     UUID FK
+//   currentUser.id     → recall_entries.user_id        UUID FK
 // ============================================================
 
 async function openRecallModal(entryId) {
-  activeRecallEntryId = entryId; // UUID string
+  activeRecallEntryId = entryId;
 
-  // Fetch title from Supabase to display in the modal
+  // Fetch just the title to display in the modal header
   const { data, error } = await supabase
     .from('content')
     .select('title')
@@ -808,7 +757,7 @@ async function openRecallModal(entryId) {
 
   if (error || !data) return;
 
-  // Reset modal UI
+  // Reset modal to step 1
   recallInput.value = '';
   selectedScore     = null;
   ratingBtns.forEach(b => b.classList.remove('selected'));
@@ -832,10 +781,6 @@ function closeRecallModal() {
   selectedScore       = null;
 }
 
-/**
- * INSERT into public.recall_entries
- * This saves the user's recall attempt linked to the content item.
- */
 async function handleRecallSubmit() {
   if (!selectedScore || !activeRecallEntryId) return;
 
@@ -844,14 +789,14 @@ async function handleRecallSubmit() {
 
   setLoading(recallSubmit, true);
 
-  // SUPABASE DB: insert one row into public.recall_entries
+  // Insert into public.recall_entries
   const { error } = await supabase
     .from('recall_entries')
     .insert({
-      content_id:    activeRecallEntryId,  // UUID — FK to content.id
-      user_id:       currentUser.id,        // UUID — FK to auth.users.id
-      response_text: text,                  // TEXT NOT NULL — what user remembered
-      recall_score:  selectedScore,         // INTEGER — must be 1 through 5
+      content_id:    activeRecallEntryId,
+      user_id:       currentUser.id,
+      response_text: text,
+      recall_score:  selectedScore,
     });
 
   setLoading(recallSubmit, false);
@@ -881,20 +826,19 @@ async function handleRecallSubmit() {
 
 
 // ============================================================
-// SECTION 13 — DELETE
-// ▸ Supabase call: supabase.from('content').delete()
-// ▸ ON DELETE CASCADE means related recall_entries are deleted
-//   automatically by Postgres — no extra query needed.
-// ▸ RLS policy enforces users can only delete their own rows.
+// DELETE
+// Replaces: deleteEntry() filtering a localStorage array.
+// Deletes the content row from Supabase. Because recall_entries
+// has ON DELETE CASCADE in schema.sql, all related recall rows
+// are removed automatically — no extra query needed.
 // ============================================================
 
 async function deleteEntry(id) {
-  // SUPABASE DB: delete the content row (cascade deletes recall_entries)
   const { error } = await supabase
     .from('content')
     .delete()
     .eq('id', id)
-    .eq('user_id', currentUser.id); // extra safety — belt-and-suspenders
+    .eq('user_id', currentUser.id); // safety check: only delete own rows
 
   if (error) { console.error('Delete error:', error.message); return; }
 
@@ -904,20 +848,16 @@ async function deleteEntry(id) {
 
 
 // ============================================================
-// SECTION 14 — HELPERS
+// HELPERS  (unchanged from original, plus setLoading)
 // ============================================================
 
-/** Shows an error message element, auto-hides after 5s */
 function showError(el, msg) {
   el.textContent = msg;
   el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 5000);
+  setTimeout(() => el.classList.add('hidden'), 4000);
 }
 
-/**
- * Disables/enables a button during async operations.
- * Prevents double-submits on slow connections.
- */
+// Disables a button during async calls to prevent double-submits
 function setLoading(btn, isLoading) {
   btn.disabled      = isLoading;
   btn.style.opacity = isLoading ? '0.6' : '1';
@@ -927,7 +867,6 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-/** Prevent XSS by escaping HTML special characters */
 function escapeHtml(str) {
   if (!str) return '';
   return str
