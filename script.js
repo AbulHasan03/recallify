@@ -333,6 +333,7 @@ async function handleSignup() {
       showError(signupError, "An account with this email already exists. Please Sign In.");
     } else if (data.user) {
       currentUser = { id: data.user.id, email: data.user.email, name };
+      console.log("Signup successful, entering app:", currentUser);
       enterApp();
     } else {
       showError(signupError, "Check your email to confirm your account!");
@@ -360,6 +361,7 @@ async function handleLogin() {
     if (error) throw error;
 
     const meta = data.user.user_metadata;
+    console.log("Login successful, user data:", data.user);
     currentUser = {
       id:    data.user.id,
       email: data.user.email,
@@ -880,9 +882,15 @@ async function deleteEntry(id) {
 // ============================================================
 
 function showError(el, msg) {
+  // Clear the input fields associated with the error before showing the message
+  if (el === loginError) document.getElementById('login-password').value = '';
+  if (el === signupError) document.getElementById('signup-password').value = '';
   el.textContent = msg;
   el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 4000);
+  // For auth errors, keep them visible until next action or refresh for easier debugging
+  if (el !== loginError && el !== signupError) {
+    setTimeout(() => el.classList.add('hidden'), 4000);
+  }
 }
 
 // Disables a button during async calls to prevent double-submits
