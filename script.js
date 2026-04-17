@@ -17,7 +17,15 @@
 const SUPABASE_URL  = 'https://nfwvcswubmtqkinuelvz.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_qP1Awe5vRUOkUxxO6JkrNQ_RIeGMj60';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let supabaseClient;
+try {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+} catch (err) {
+  console.error("Supabase failed to initialize. Check your URL and Key.", err);
+  // We initialize bindEvents anyway so at least UI toggles work
+  document.addEventListener('DOMContentLoaded', () => bindEvents());
+}
+
 
 
 // ============================================================
@@ -44,6 +52,8 @@ const btnSignup   = document.getElementById('btn-signup');
 const loginForm   = document.getElementById('login-form');
 const signupForm  = document.getElementById('signup-form');
 const loginError  = document.getElementById('login-error');
+const loginSubmit = document.getElementById('login-submit');
+const signupSubmit = document.getElementById('signup-submit');
 const signupError = document.getElementById('signup-error');
 
 const navBtns         = document.querySelectorAll('.nav-btn');
@@ -71,12 +81,12 @@ const dashGreeting = document.getElementById('dashboard-greeting');
 
 const logFormCard   = document.getElementById('log-form-card');
 const logSuccess    = document.getElementById('log-success');
-const contentTitle  = document.getElementById('content-title');
-const contentLink   = document.getElementById('content-link');
+const contentTitle  = document.getElementById('title');
+const contentLink   = document.getElementById('link');
 const contentNotes  = document.getElementById('content-notes');
 const typeBtns      = document.querySelectorAll('.type-btn');
 const logError      = document.getElementById('log-error');
-const logSubmit     = document.getElementById('log-submit');
+const logSubmit     = document.getElementById('addContentBtn');
 const recallNowBtn  = document.getElementById('recall-now-btn');
 const logAnotherBtn = document.getElementById('log-another-btn');
 
@@ -89,7 +99,7 @@ const modalContentNm = document.getElementById('modal-content-name');
 const recallStep1    = document.getElementById('recall-step-1');
 const recallStep2    = document.getElementById('recall-step-2');
 const recallStep3    = document.getElementById('recall-step-3');
-const recallInput    = document.getElementById('recall-input');
+const recallInput    = document.getElementById('recallText');
 const recallNextBtn  = document.getElementById('recall-next-btn');
 const ratingBtns     = document.querySelectorAll('.rating-btn');
 const recallSubmit   = document.getElementById('recall-submit-btn');
@@ -112,29 +122,34 @@ const deleteConfirm = document.getElementById('delete-confirm');
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Check if user already has an active session (survives refresh)
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (session) {
-    const meta = session.user.user_metadata;
-    currentUser = {
-      id:    session.user.id,
-      email: session.user.email,
-      name:  meta?.name || session.user.email.split('@')[0],
-    };
-    enterApp();
-  }
-
-  // If the session expires or the user signs out in another tab,
-  // automatically return them to the auth screen.
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (!session && currentUser) {
-      currentUser = null;
-      showAuthScreen();
-    }
-  });
-
+  // 1. Bind events immediately so the UI is responsive even if Supabase is loading
   bindEvents();
+
+  // 2. Wrap Supabase calls in try/catch to prevent the whole script from dying
+  try {
+    // Check if user already has an active session (survives refresh)
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+
+    if (session && !error) {
+      const meta = session.user.user_metadata;
+      currentUser = {
+        id:    session.user.id,
+        email: session.user.email,
+        name:  meta?.name || session.user.email.split('@')[0],
+      };
+      enterApp();
+    }
+
+    // Auth state listener
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (!session && currentUser) {
+        currentUser = null;
+        showAuthScreen();
+      }
+    });
+  } catch (err) {
+    console.error("Supabase session check failed. Check your API Key.", err);
+  }
 });
 
 
@@ -160,12 +175,12 @@ function bindEvents() {
   });
 
   // Auth submit
-  document.getElementById('login-submit').addEventListener('click', handleLogin);
+  loginSubmit?.addEventListener('click', handleLogin);
   document.getElementById('login-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleLogin();
   });
 
-  document.getElementById('signup-submit').addEventListener('click', handleSignup);
+  signupSubmit?.addEventListener('click', handleSignup);
   document.getElementById('signup-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleSignup();
   });
@@ -302,20 +317,31 @@ async function handleSignup() {
     showError(signupError, 'Password must be at least 6 characters.'); return;
   }
 
-  setLoading(document.getElementById('signup-submit'), true);
+  setLoading(signupSubmit, true);
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password: pass,
-    options: { data: { name } },  // saved to user_metadata.name
-  });
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { name } },
+    });
 
-  setLoading(document.getElementById('signup-submit'), false);
+    if (error) throw error;
 
-  if (error) { showError(signupError, error.message); return; }
-
-  currentUser = { id: data.user.id, email: data.user.email, name };
-  enterApp();
+    // If identities is empty, the user likely already exists
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      showError(signupError, "An account with this email already exists. Please Sign In.");
+    } else if (data.user) {
+      currentUser = { id: data.user.id, email: data.user.email, name };
+      enterApp();
+    } else {
+      showError(signupError, "Check your email to confirm your account!");
+    }
+  } catch (err) {
+    showError(signupError, err.message || "Signup failed. Please try again.");
+  } finally {
+    setLoading(signupSubmit, false);
+  }
 }
 
 // SIGN IN — validates credentials, Supabase stores the JWT automatically.
@@ -327,27 +353,29 @@ async function handleLogin() {
     showError(loginError, 'Please fill in all fields.'); return;
   }
 
-  setLoading(document.getElementById('login-submit'), true);
+  setLoading(loginSubmit, true);
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
 
-  setLoading(document.getElementById('login-submit'), false);
-
-  if (error) { showError(loginError, 'Invalid email or password.'); return; }
-
-  const meta = data.user.user_metadata;
-  currentUser = {
-    id:    data.user.id,
-    email: data.user.email,
-    name:  meta?.name || email.split('@')[0],
-  };
-
-  enterApp();
+    const meta = data.user.user_metadata;
+    currentUser = {
+      id:    data.user.id,
+      email: data.user.email,
+      name:  meta?.name || (email ? email.split('@')[0] : 'User'),
+    };
+    enterApp();
+  } catch (err) {
+    showError(loginError, err.message || "Login failed.");
+  } finally {
+    setLoading(loginSubmit, false);
+  }
 }
 
 // SIGN OUT — clears the Supabase JWT and returns to auth screen.
 async function signOut() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   currentUser = null;
   showAuthScreen();
 }
@@ -423,7 +451,7 @@ async function handleLogSubmit() {
   setLoading(logSubmit, true);
 
   // Insert into public.content — returns the new row so we get its UUID
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('content')
     .insert({
       user_id: currentUser.id,
@@ -476,7 +504,7 @@ function resetLogForm() {
 async function getUserEntries() {
   if (!currentUser) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('content')
     .select(`
       id,
@@ -749,7 +777,7 @@ async function openRecallModal(entryId) {
   activeRecallEntryId = entryId;
 
   // Fetch just the title to display in the modal header
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('content')
     .select('title')
     .eq('id', entryId)
@@ -790,7 +818,7 @@ async function handleRecallSubmit() {
   setLoading(recallSubmit, true);
 
   // Insert into public.recall_entries
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('recall_entries')
     .insert({
       content_id:    activeRecallEntryId,
@@ -834,7 +862,7 @@ async function handleRecallSubmit() {
 // ============================================================
 
 async function deleteEntry(id) {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('content')
     .delete()
     .eq('id', id)
