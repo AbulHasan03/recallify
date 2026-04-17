@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recallify — Remember What You Learn</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ========== AUTH SCREEN ========== -->
+  <div id="auth-screen" class="screen active">
+    <div class="auth-bg">
+      <div class="auth-blob blob-1"></div>
+      <div class="auth-blob blob-2"></div>
+    </div>
+    <div class="auth-container">
+      <div class="auth-brand">
+        <span class="brand-mark">◎</span>
+        <h1 class="brand-name">Recallify</h1>
+      </div>
+      <p class="auth-tagline">Active recall for everything you consume.</p>
+
+      <!-- Toggle -->
+      <div class="auth-toggle">
+        <button class="toggle-btn active" id="btn-login">Sign In</button>
+        <button class="toggle-btn" id="btn-signup">Sign Up</button>
+      </div>
+
+      <!-- Login Form -->
+      <div class="auth-form" id="login-form">
+        <div class="field-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com" />
+        </div>
+        <div class="field-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" />
+        </div>
+        <p class="auth-error hidden" id="login-error"></p>
+        <button class="btn-primary full-width" id="login-submit">Sign In →</button>
+      </div>
+
+      <!-- Signup Form -->
+      <div class="auth-form hidden" id="signup-form">
+        <div class="field-group">
+          <label for="signup-name">Name</label>
+          <input type="text" id="signup-name" placeholder="Your name" />
+        </div>
+        <div class="field-group">
+          <label for="signup-email">Email</label>
+          <input type="email" id="signup-email" placeholder="you@example.com" />
+        </div>
+        <div class="field-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" placeholder="Min. 6 characters" />
+        </div>
+        <p class="auth-error hidden" id="signup-error"></p>
+        <button class="btn-primary full-width" id="signup-submit">Create Account →</button>
+      </div>
+
+      <p class="auth-note">Your data is securely stored with Supabase.</p>
+    </div>
+  </div>
+
+  <!-- ========== APP SCREEN ========== -->
+  <div id="app-screen" class="screen hidden">
+
+    <!-- Sidebar Nav -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-mark small">◎</span>
+        <span class="brand-name small">Recallify</span>
+      </div>
+      <ul class="nav-links">
+        <li><button class="nav-btn active" data-view="dashboard">
+          <span class="nav-icon">▦</span> Dashboard
+        </button></li>
+        <li><button class="nav-btn" data-view="log">
+          <span class="nav-icon">＋</span> Log Content
+        </button></li>
+        <li><button class="nav-btn" data-view="library">
+          <span class="nav-icon">≡</span> My Library
+        </button></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <span class="user-avatar" id="user-avatar">U</span>
+          <span class="user-name" id="user-name-display">User</span>
+        </div>
+        <button class="signout-btn" id="signout-btn" title="Sign out">⏏</button>
+      </div>
+    </nav>
+
+    <!-- Mobile Top Bar -->
+    <header class="topbar">
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+      <div class="topbar-brand">
+        <span class="brand-mark small">◎</span>
+        <span class="brand-name small">Recallify</span>
+      </div>
+      <button class="signout-btn mobile" id="signout-btn-mobile">⏏</button>
+    </header>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ---- DASHBOARD VIEW ---- -->
+      <section class="view active" id="view-dashboard">
+        <div class="view-header">
+          <h2 class="view-title">Dashboard</h2>
+          <p class="view-subtitle" id="dashboard-greeting">Welcome back!</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card accent">
+            <span class="stat-label">Avg. Recall Score</span>
+            <span class="stat-value" id="stat-avg">—</span>
+            <span class="stat-unit">out of 5</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Entries</span>
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-unit">items logged</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Recalled</span>
+            <span class="stat-value" id="stat-recalled">0</span>
+            <span class="stat-unit">with active recall</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Pending Recall</span>
+            <span class="stat-value" id="stat-pending">0</span>
+            <span class="stat-unit">awaiting recall</span>
+          </div>
+        </div>
+
+        <div class="insight-card" id="insight-card">
+          <span class="insight-icon">💡</span>
+          <p class="insight-text" id="insight-text">Log some content and perform recalls to see insights here.</p>
+        </div>
+
+        <div class="section-block">
+          <h3 class="section-title">Recent Activity</h3>
+          <div id="recent-list" class="recent-list">
+            <p class="empty-state">Nothing logged yet. Start by logging some content!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- LOG CONTENT VIEW ---- -->
+      <section class="view hidden" id="view-log">
+        <div class="view-header">
+          <h2 class="view-title">Log Content</h2>
+          <p class="view-subtitle">What did you just consume?</p>
+        </div>
+
+        <div class="form-card" id="log-form-card">
+          <div class="field-group">
+            <label for="content-title">Title <span class="required">*</span></label>
+            <input type="text" id="content-title" placeholder="e.g. How the brain forms memories" />
+          </div>
+          <div class="field-group">
+            <label for="content-type">Type <span class="required">*</span></label>
+            <div class="type-selector" id="type-selector">
+              <button class="type-btn active" data-type="Video">📹 Video</button>
+              <button class="type-btn" data-type="Article">📄 Article</button>
+              <button class="type-btn" data-type="Other">📦 Other</button>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="content-link">Link <span class="optional">(optional)</span></label>
+            <input type="url" id="content-link" placeholder="https://..." />
+          </div>
+          <div class="field-group">
+            <label for="content-notes">Quick Notes <span class="optional">(optional)</span></label>
+            <textarea id="content-notes" rows="3" placeholder="Jot down a few keywords or thoughts..."></textarea>
+          </div>
+          <p class="form-error hidden" id="log-error"></p>
+          <div class="form-actions">
+            <button class="btn-primary" id="log-submit">Save Entry →</button>
+          </div>
+        </div>
+
+        <!-- Success state -->
+        <div class="form-success hidden" id="log-success">
+          <span class="success-icon">✓</span>
+          <h3>Entry saved!</h3>
+          <p>Come back later to perform an active recall.</p>
+          <div class="success-actions">
+            <button class="btn-primary" id="recall-now-btn">Recall Now →</button>
+            <button class="btn-ghost" id="log-another-btn">Log Another</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- LIBRARY VIEW ---- -->
+      <section class="view hidden" id="view-library">
+        <div class="view-header">
+          <h2 class="view-title">My Library</h2>
+          <p class="view-subtitle">Everything you've logged</p>
+        </div>
+
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="All">All</button>
+          <button class="filter-btn" data-filter="Video">Videos</button>
+          <button class="filter-btn" data-filter="Article">Articles</button>
+          <button class="filter-btn" data-filter="Other">Other</button>
+          <button class="filter-btn" data-filter="Pending">Pending Recall</button>
+        </div>
+
+        <div id="library-list" class="library-list">
+          <p class="empty-state">Your library is empty. Go log some content!</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ========== RECALL MODAL ========== -->
+  <div class="modal-overlay hidden" id="recall-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+
+      <!-- Step 1: Recall Input -->
+      <div class="modal-step active" id="recall-step-1">
+        <div class="modal-eyebrow">Active Recall</div>
+        <h3 class="modal-title" id="modal-title">What do you remember?</h3>
+        <p class="modal-content-name" id="modal-content-name"></p>
+        <div class="recall-prompt">
+          <p>Without looking at any notes, write down everything you can recall about this content.</p>
+        </div>
+        <textarea id="recall-input" rows="6" placeholder="Type what you remember..."></textarea>
+        <button class="btn-primary full-width" id="recall-next-btn">Rate My Recall →</button>
+      </div>
+
+      <!-- Step 2: Rating -->
+      <div class="modal-step hidden" id="recall-step-2">
+        <div class="modal-eyebrow">Active Recall</div>
+        <h3 class="modal-title">How well did you recall?</h3>
+        <p class="modal-sub">Be honest — this helps you track progress accurately.</p>
+        <div class="rating-grid">
+          <button class="rating-btn" data-score="1">
+            <span class="rating-num">1</span>
+            <span class="rating-label">Barely anything</span>
+          </button>
+          <button class="rating-btn" data-score="2">
+            <span class="rating-num">2</span>
+            <span class="rating-label">A little</span>
+          </button>
+          <button class="rating-btn" data-score="3">
+            <span class="rating-num">3</span>
+            <span class="rating-label">Some key points</span>
+          </button>
+          <button class="rating-btn" data-score="4">
+            <span class="rating-num">4</span>
+            <span class="rating-label">Most of it</span>
+          </button>
+          <button class="rating-btn" data-score="5">
+            <span class="rating-num">5</span>
+            <span class="rating-label">Almost everything</span>
+          </button>
+        </div>
+        <button class="btn-primary full-width hidden" id="recall-submit-btn">Save Recall →</button>
+      </div>
+
+      <!-- Step 3: Result -->
+      <div class="modal-step hidden" id="recall-step-3">
+        <div class="recall-result">
+          <div class="result-score-ring">
+            <span class="result-score-num" id="result-score-num">0</span>
+            <span class="result-score-label">/ 5</span>
+          </div>
+          <h3 class="result-title" id="result-title">Well done!</h3>
+          <p class="result-message" id="result-message"></p>
+          <button class="btn-primary" id="recall-done-btn">Back to Library →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DELETE CONFIRM MODAL ========== -->
+  <div class="modal-overlay hidden" id="delete-modal">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+      <h3 class="modal-title">Delete entry?</h3>
+      <p class="modal-sub">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="delete-cancel">Cancel</button>
+        <button class="btn-danger" id="delete-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS client — must load BEFORE script.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>
