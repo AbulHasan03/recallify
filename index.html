@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recallify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <h1>Recallify</h1>
+
+  <!-- AUTH -->
+  <section>
+    <h2>Login / Signup</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button id="signupBtn">Sign Up</button>
+    <button id="loginBtn">Login</button>
+  </section>
+
+  <!-- ADD CONTENT -->
+  <section>
+    <h2>Add Content</h2>
+    <input id="title" placeholder="Title">
+    <input id="type" placeholder="Type (video/article)">
+    <input id="link" placeholder="Optional link">
+    <button id="addContentBtn">Add Content</button>
+  </section>
+
+  <!-- RECALL -->
+  <section>
+    <h2>Recall</h2>
+    <textarea id="recallText" placeholder="What do you remember?"></textarea>
+    <input id="score" type="number" min="1" max="5" placeholder="Score (1-5)">
+    <button id="recallBtn">Submit Recall</button>
+  </section>
+
+  <!-- DATA DISPLAY -->
+  <section>
+    <h2>Your Entries</h2>
+    <ul id="contentList"></ul>
+  </section>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
