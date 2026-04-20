@@ -69,6 +69,7 @@ const views = {
   dashboard: document.getElementById('view-dashboard'),
   log:       document.getElementById('view-log'),
   library:   document.getElementById('view-library'),
+  social:    document.getElementById('view-social'),
 };
 
 const statAvg      = document.getElementById('stat-avg');
@@ -228,6 +229,16 @@ function bindEvents() {
       btn.classList.add('active');
       currentFilter = btn.dataset.filter;
       renderLibrary();
+    });
+  });
+
+  // Social sub-tabs
+  document.querySelectorAll('.social-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.social-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.social-sub-view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('social-' + tab.dataset.sub).classList.add('active');
     });
   });
 
@@ -418,6 +429,7 @@ function switchView(viewName) {
 
   if (viewName === 'dashboard') renderDashboard();
   if (viewName === 'library')   renderLibrary();
+  if (viewName === 'social')    console.log("Social view active"); 
   if (viewName === 'log')       resetLogForm();
 }
 
