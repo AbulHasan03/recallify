@@ -1,0 +1,832 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: var(--color-background-primary);
+  --bg2: var(--color-background-secondary);
+  --bg3: var(--color-background-tertiary);
+  --txt: var(--color-text-primary);
+  --txt2: var(--color-text-secondary);
+  --txt3: var(--color-text-tertiary);
+  --border: var(--color-border-tertiary);
+  --border2: var(--color-border-secondary);
+  --teal: #1D9E75;
+  --teal-light: #E1F5EE;
+  --teal-dark: #0F6E56;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+}
+
+body { font-family: 'DM Sans', var(--font-sans), sans-serif; background: transparent; color: var(--txt); }
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 680px;
+  border: 0.5px solid var(--border2);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── Top nav ── */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg);
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand-dot { width: 8px; height: 8px; background: var(--teal); border-radius: 50%; }
+.brand-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.brand-badge {
+  font-size: 10px; font-weight: 500; background: var(--teal-light);
+  color: var(--teal-dark); padding: 2px 8px; border-radius: 99px;
+}
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab {
+  font-size: 13px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  color: var(--txt2); border: none; background: none; font-family: inherit;
+  transition: all .15s;
+}
+.nav-tab:hover { background: var(--bg2); color: var(--txt); }
+.nav-tab.active { background: var(--teal); color: #fff; font-weight: 500; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--purple-light); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--purple); }
+
+/* ── Section system ── */
+.section { display: none; padding: 0; }
+.section.active { display: block; }
+
+/* ── Section: Overview ── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 610px;
+}
+.sidebar {
+  border-right: 0.5px solid var(--border);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--bg2);
+}
+.sidebar-section-label { font-size: 10px; font-weight: 500; color: var(--txt3); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 8px; }
+.match-card {
+  background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px;
+  padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer;
+  transition: border-color .15s;
+}
+.match-card:hover { border-color: var(--teal); }
+.match-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.match-info { flex: 1; min-width: 0; }
+.match-name { font-size: 13px; font-weight: 500; }
+.match-topics { font-size: 11px; color: var(--txt2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.match-score {
+  font-size: 11px; font-weight: 500; background: var(--teal-light); color: var(--teal-dark);
+  padding: 2px 7px; border-radius: 99px; flex-shrink: 0;
+}
+.group-card {
+  background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px;
+  padding: 12px; cursor: pointer; transition: border-color .15s;
+}
+.group-card:hover { border-color: var(--teal); }
+.group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.group-name { font-size: 13px; font-weight: 500; }
+.group-live { font-size: 10px; background: #E1F5EE; color: var(--teal-dark); padding: 2px 7px; border-radius: 99px; display: flex; align-items: center; gap: 4px; }
+.live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.group-meta { font-size: 11px; color: var(--txt2); }
+
+.main-feed { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.feed-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.feed-title { font-size: 16px; font-weight: 500; }
+.filter-row { display: flex; gap: 8px; }
+.filter-chip {
+  font-size: 12px; padding: 4px 12px; border-radius: 99px; cursor: pointer;
+  border: 0.5px solid var(--border2); background: none; color: var(--txt2);
+  font-family: inherit; transition: all .15s;
+}
+.filter-chip.active { background: var(--txt); color: var(--bg); border-color: var(--txt); }
+.video-card {
+  background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px;
+  padding: 16px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+}
+.video-card:hover { border-color: var(--teal); }
+.video-card-inner { display: flex; gap: 14px; align-items: flex-start; }
+.video-thumb {
+  width: 90px; height: 60px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.video-info { flex: 1; min-width: 0; }
+.video-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.video-by { font-size: 12px; color: var(--txt2); margin-bottom: 8px; }
+.tag-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  font-size: 11px; padding: 2px 8px; border-radius: 99px;
+  border: 0.5px solid var(--border);
+}
+.tag.ml { background: var(--purple-light); color: var(--purple); border-color: transparent; }
+.tag.math { background: var(--blue-light); color: var(--blue); border-color: transparent; }
+.tag.neuro { background: var(--coral-light); color: var(--coral); border-color: transparent; }
+.tag.hist { background: var(--amber-light); color: var(--amber); border-color: transparent; }
+.tag.bio { background: var(--teal-light); color: var(--teal-dark); border-color: transparent; }
+.video-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+.footer-meta { font-size: 11px; color: var(--txt2); display: flex; gap: 12px; }
+.footer-actions { display: flex; gap: 8px; }
+.action-btn {
+  font-size: 11px; padding: 4px 10px; border-radius: 7px; cursor: pointer;
+  font-family: inherit; border: 0.5px solid var(--border2); background: var(--bg2);
+  color: var(--txt2); transition: all .15s;
+}
+.action-btn:hover { background: var(--teal); color: #fff; border-color: var(--teal); }
+.action-btn.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+/* ── Section: Data Model ── */
+.data-model-container { padding: 20px; }
+.dm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.entity-card {
+  border: 0.5px solid var(--border2); border-radius: 12px; overflow: hidden;
+}
+.entity-header {
+  padding: 10px 14px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;
+  border-bottom: 0.5px solid var(--border);
+}
+.entity-icon { font-size: 14px; }
+.entity-fields { padding: 10px 0; }
+.field-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 14px; font-size: 12px;
+}
+.field-name { color: var(--txt); font-weight: 400; }
+.field-type { color: var(--txt3); font-family: 'DM Mono', monospace; font-size: 11px; }
+.field-pk { background: var(--amber-light); color: var(--amber); font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+.field-fk { background: var(--blue-light); color: var(--blue); font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+.relations-section { margin-top: 8px; }
+.rel-label { font-size: 10px; font-weight: 500; color: var(--txt3); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 8px; }
+.rel-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--txt2); padding: 4px 0; }
+.rel-badge { background: var(--purple-light); color: var(--purple); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+/* ── Section: Matching Algorithm ── */
+.algo-container { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.algo-card {
+  border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.algo-card-header {
+  padding: 12px 16px; background: var(--bg2); border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.algo-card-title { font-size: 14px; font-weight: 500; }
+.algo-card-body { padding: 16px; }
+.signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.signal-item {
+  border: 0.5px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.signal-name { font-size: 13px; font-weight: 400; }
+.signal-weight {
+  font-size: 12px; font-weight: 500; background: var(--teal-light); color: var(--teal-dark);
+  padding: 2px 8px; border-radius: 99px;
+}
+.score-demo { margin-top: 14px; }
+.score-bar-wrap { margin-bottom: 8px; }
+.score-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--txt2); margin-bottom: 4px; }
+.score-bar-track { height: 6px; background: var(--bg2); border-radius: 99px; overflow: hidden; }
+.score-bar-fill { height: 6px; border-radius: 99px; transition: width .5s ease; }
+.formula-box {
+  background: var(--bg2); border: 0.5px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--txt2); line-height: 1.7;
+}
+
+/* ── Section: Chat Architecture ── */
+.arch-container { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.arch-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.arch-card {
+  border: 0.5px solid var(--border); border-radius: 12px; padding: 16px;
+}
+.arch-card-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.arch-step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+.step-num {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--bg2);
+  border: 0.5px solid var(--border2); font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--txt2);
+}
+.step-text { font-size: 12px; color: var(--txt2); line-height: 1.5; padding-top: 2px; }
+.chat-mock {
+  border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.chat-header {
+  padding: 12px 16px; background: var(--bg2); border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+}
+.chat-messages { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 160px; }
+.msg { display: flex; gap: 8px; align-items: flex-start; }
+.msg-avatar { width: 24px; height: 24px; border-radius: 50%; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.msg-bubble { flex: 1; }
+.msg-sender { font-size: 10px; color: var(--txt3); margin-bottom: 3px; }
+.msg-text { font-size: 12px; background: var(--bg2); border-radius: 8px; padding: 8px 10px; line-height: 1.5; display: inline-block; max-width: 85%; }
+.msg-ai .msg-text { background: var(--purple-light); color: var(--purple); }
+.ai-badge { font-size: 9px; background: var(--purple-light); color: var(--purple); padding: 1px 5px; border-radius: 3px; }
+.timestamp-badge { font-size: 9px; background: var(--blue-light); color: var(--blue); padding: 1px 5px; border-radius: 3px; cursor: pointer; }
+
+/* ── Section: User Flow ── */
+.flow-container { padding: 20px; }
+.flow-steps { display: flex; flex-direction: column; gap: 0; }
+.flow-step {
+  display: flex; gap: 16px; align-items: flex-start; cursor: pointer;
+}
+.flow-step-left { display: flex; flex-direction: column; align-items: center; }
+.flow-step-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; flex-shrink: 0; background: var(--bg);
+  transition: all .2s; color: var(--txt2);
+}
+.flow-step.done .flow-step-circle { background: var(--teal); border-color: var(--teal); color: #fff; }
+.flow-step.active .flow-step-circle { background: var(--bg); border-color: var(--teal); color: var(--teal); box-shadow: 0 0 0 3px var(--teal-light); }
+.flow-connector { width: 2px; height: 40px; background: var(--border); margin: 4px 0; }
+.flow-connector.done { background: var(--teal); }
+.flow-step-right { flex: 1; padding: 6px 0 32px; }
+.flow-step-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.flow-step-desc { font-size: 12px; color: var(--txt2); line-height: 1.6; }
+.flow-step-detail {
+  margin-top: 10px; background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; display: none;
+}
+.flow-step.active .flow-step-detail { display: block; }
+.flow-detail-items { display: flex; flex-direction: column; gap: 6px; }
+.flow-detail-item { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.flow-check { width: 16px; height: 16px; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
+.flow-nav { display: flex; gap: 10px; margin-top: 8px; }
+.flow-btn {
+  font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  font-family: inherit; border: 0.5px solid var(--border2); background: var(--bg); color: var(--txt2);
+  transition: all .15s;
+}
+.flow-btn.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+.flow-btn:hover:not(.primary) { background: var(--bg2); }
+
+/* ── Privacy Banner ── */
+.privacy-banner {
+  margin: 16px; border: 0.5px solid var(--teal); border-radius: 10px;
+  padding: 12px 16px; background: var(--teal-light); display: flex; align-items: center; gap: 12px;
+}
+.privacy-text { flex: 1; font-size: 12px; color: var(--teal-dark); line-height: 1.5; }
+.privacy-btns { display: flex; gap: 8px; }
+.privacy-btn {
+  font-size: 11px; padding: 5px 12px; border-radius: 7px; cursor: pointer;
+  font-family: inherit; border: 0.5px solid var(--teal-dark); background: none; color: var(--teal-dark);
+  transition: all .15s; font-weight: 500;
+}
+.privacy-btn.accept { background: var(--teal-dark); color: #fff; border-color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<h2 class="sr-only" style="position:absolute;left:-9999px">Recallify Social Learning Feature — Interactive Design Specification</h2>
+
+<div class="app-shell">
+  <!-- Top Nav -->
+  <div class="top-nav">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span class="brand-name">Recallify</span>
+      <span class="brand-badge">Social Beta</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showSection('overview')">Feed</button>
+      <button class="nav-tab" onclick="showSection('datamodel')">Data Model</button>
+      <button class="nav-tab" onclick="showSection('matching')">Matching</button>
+      <button class="nav-tab" onclick="showSection('chat')">Chat Arch</button>
+      <button class="nav-tab" onclick="showSection('flow')">User Flow</button>
+    </div>
+    <div class="nav-right">
+      <div class="avatar">YK</div>
+    </div>
+  </div>
+
+  <!-- SECTION: Overview / Feed -->
+  <div id="section-overview" class="section active">
+    <div class="privacy-banner">
+      <div style="font-size:16px">🔒</div>
+      <div class="privacy-text">Social features are <strong>opt-in</strong>. Your learning activity stays private until you choose to share. Set your visibility: Public · Friends-only · Anonymous.</div>
+      <div class="privacy-btns">
+        <button class="privacy-btn">Settings</button>
+        <button class="privacy-btn accept">Join Social</button>
+      </div>
+    </div>
+    <div class="overview-grid">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div>
+          <div class="sidebar-section-label">Suggested Partners</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="match-card">
+              <div class="match-avatar" style="background:#EEEDFE;color:#534AB7">AK</div>
+              <div class="match-info">
+                <div class="match-name">Arjun K.</div>
+                <div class="match-topics">ML, Linear Algebra, Stats</div>
+              </div>
+              <span class="match-score">94%</span>
+            </div>
+            <div class="match-card">
+              <div class="match-avatar" style="background:#FAECE7;color:#993C1D">ML</div>
+              <div class="match-info">
+                <div class="match-name">Maya L.</div>
+                <div class="match-topics">Neuroscience, Biology</div>
+              </div>
+              <span class="match-score">87%</span>
+            </div>
+            <div class="match-card">
+              <div class="match-avatar" style="background:#E1F5EE;color:#0F6E56">TS</div>
+              <div class="match-info">
+                <div class="match-name">Tom S.</div>
+                <div class="match-topics">History, Philosophy</div>
+              </div>
+              <span class="match-score">81%</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sidebar-section-label">Active Study Groups</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="group-card">
+              <div class="group-header">
+                <span class="group-name">ML Fundamentals</span>
+                <span class="group-live"><span class="live-dot"></span>Live</span>
+              </div>
+              <div class="group-meta">12 members · 3 online now</div>
+            </div>
+            <div class="group-card">
+              <div class="group-header">
+                <span class="group-name">Systems Biology</span>
+              </div>
+              <div class="group-meta">8 members · next session in 2h</div>
+            </div>
+            <div class="group-card">
+              <div class="group-header">
+                <span class="group-name">Cold War History</span>
+              </div>
+              <div class="group-meta">5 members · studying a video</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sidebar-section-label">Trending Topics</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="tag ml">transformer architecture</span>
+            <span class="tag bio">cell signaling</span>
+            <span class="tag hist">cold war</span>
+            <span class="tag math">fourier transforms</span>
+            <span class="tag neuro">neuroplasticity</span>
+          </div>
+        </div>
+      </div>
+      <!-- Main Feed -->
+      <div class="main-feed">
+        <div class="feed-header">
+          <span class="feed-title">Learning Feed</span>
+          <div class="filter-row">
+            <button class="filter-chip active">All</button>
+            <button class="filter-chip">My Topics</button>
+            <button class="filter-chip">Groups</button>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-card-inner">
+            <div class="video-thumb" style="background:var(--purple-light)">🧠</div>
+            <div class="video-info">
+              <div class="video-title">Attention is All You Need — Annotated</div>
+              <div class="video-by">shared by Arjun K. · 3h ago · ML Fundamentals group</div>
+              <div class="tag-row">
+                <span class="tag ml">machine learning</span>
+                <span class="tag math">attention</span>
+              </div>
+            </div>
+          </div>
+          <div class="video-footer">
+            <div class="footer-meta">
+              <span>14 learners</span>
+              <span>6 discussions</span>
+              <span>AI summary ready</span>
+            </div>
+            <div class="footer-actions">
+              <button class="action-btn">Add Note</button>
+              <button class="action-btn primary">Join Group Study</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-card-inner">
+            <div class="video-thumb" style="background:var(--teal-light)">🦠</div>
+            <div class="video-info">
+              <div class="video-title">CRISPR Gene Editing: Mechanisms & Ethics</div>
+              <div class="video-by">shared by Maya L. · 1d ago · Systems Biology group</div>
+              <div class="tag-row">
+                <span class="tag bio">biology</span>
+                <span class="tag neuro">ethics</span>
+              </div>
+            </div>
+          </div>
+          <div class="video-footer">
+            <div class="footer-meta">
+              <span>9 learners</span>
+              <span>12 discussions</span>
+              <span>3 quiz questions</span>
+            </div>
+            <div class="footer-actions">
+              <button class="action-btn">Discuss</button>
+              <button class="action-btn primary">Watch Together</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-card-inner">
+            <div class="video-thumb" style="background:var(--amber-light)">🏛️</div>
+            <div class="video-info">
+              <div class="video-title">Origins of the Cold War — Episode 4</div>
+              <div class="video-by">shared by Tom S. · 2d ago</div>
+              <div class="tag-row">
+                <span class="tag hist">history</span>
+              </div>
+            </div>
+          </div>
+          <div class="video-footer">
+            <div class="footer-meta">
+              <span>5 learners</span>
+              <span>4 discussions</span>
+            </div>
+            <div class="footer-actions">
+              <button class="action-btn">View Notes</button>
+              <button class="action-btn primary">Start Room</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Data Model -->
+  <div id="section-datamodel" class="section">
+    <div class="data-model-container">
+      <div class="dm-grid">
+        <!-- User entity -->
+        <div class="entity-card">
+          <div class="entity-header" style="background:var(--purple-light);color:var(--purple)">
+            <span class="entity-icon">👤</span> User
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">id</span><span><span class="field-pk">PK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">username</span><span class="field-type">string</span></div>
+            <div class="field-row"><span class="field-name">email</span><span class="field-type">string</span></div>
+            <div class="field-row"><span class="field-name">privacy_mode</span><span class="field-type">enum</span></div>
+            <div class="field-row"><span class="field-name">social_opted_in</span><span class="field-type">bool</span></div>
+            <div class="field-row"><span class="field-name">learning_goal</span><span class="field-type">enum</span></div>
+            <div class="field-row"><span class="field-name">embedding_vec</span><span class="field-type">float[]</span></div>
+            <div class="field-row"><span class="field-name">reputation_pts</span><span class="field-type">int</span></div>
+            <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+          </div>
+        </div>
+        <!-- Interest entity -->
+        <div class="entity-card">
+          <div class="entity-header" style="background:var(--teal-light);color:var(--teal-dark)">
+            <span class="entity-icon">🏷️</span> Interest
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">id</span><span><span class="field-pk">PK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">name</span><span class="field-type">string</span></div>
+            <div class="field-row"><span class="field-name">category</span><span class="field-type">string</span></div>
+            <div class="field-row"><span class="field-name">parent_id</span><span><span class="field-fk">FK</span>&nbsp;<span class="field-type">uuid?</span></span></div>
+            <div class="field-row"><span class="field-name">embedding_vec</span><span class="field-type">float[]</span></div>
+          </div>
+          <div style="border-top:0.5px solid var(--border);margin:0 14px"></div>
+          <div class="entity-header" style="background:var(--blue-light);color:var(--blue);margin-top:0;border-top:none">
+            <span class="entity-icon">📹</span> Video
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">id</span><span><span class="field-pk">PK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">uploader_id</span><span><span class="field-fk">FK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">url / file</span><span class="field-type">string</span></div>
+            <div class="field-row"><span class="field-name">ai_summary</span><span class="field-type">text</span></div>
+            <div class="field-row"><span class="field-name">auto_tags</span><span class="field-type">string[]</span></div>
+            <div class="field-row"><span class="field-name">visibility</span><span class="field-type">enum</span></div>
+            <div class="field-row"><span class="field-name">watch_count</span><span class="field-type">int</span></div>
+          </div>
+        </div>
+        <!-- Group entity -->
+        <div class="entity-card">
+          <div class="entity-header" style="background:var(--amber-light);color:var(--amber)">
+            <span class="entity-icon">👥</span> StudyGroup
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">id</span><span><span class="field-pk">PK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">name</span><span class="field-type">string</span></div>
+            <div class="field-row"><span class="field-name">creator_id</span><span><span class="field-fk">FK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">topic_ids</span><span class="field-type">uuid[]</span></div>
+            <div class="field-row"><span class="field-name">max_size</span><span class="field-type">int</span></div>
+            <div class="field-row"><span class="field-name">is_live</span><span class="field-type">bool</span></div>
+          </div>
+          <div style="border-top:0.5px solid var(--border);margin:0 14px"></div>
+          <div class="entity-header" style="background:var(--coral-light);color:var(--coral);margin-top:0;border-top:none">
+            <span class="entity-icon">💬</span> Message
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">id</span><span><span class="field-pk">PK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">room_id</span><span><span class="field-fk">FK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">sender_id</span><span><span class="field-fk">FK</span>&nbsp;<span class="field-type">uuid</span></span></div>
+            <div class="field-row"><span class="field-name">content</span><span class="field-type">text</span></div>
+            <div class="field-row"><span class="field-name">timestamp_ref</span><span class="field-type">float?</span></div>
+            <div class="field-row"><span class="field-name">msg_type</span><span class="field-type">enum</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="relations-section">
+        <div class="rel-label">Key Relationships</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div class="rel-row"><span class="rel-badge">User ↔ Interest</span> <span>many-to-many via UserInterest (with affinity score)</span></div>
+          <div class="rel-row"><span class="rel-badge">User ↔ StudyGroup</span> <span>many-to-many via GroupMembership (role, joined_at)</span></div>
+          <div class="rel-row"><span class="rel-badge">Video → Interest[]</span> <span>auto-tagged by AI + manual override</span></div>
+          <div class="rel-row"><span class="rel-badge">Message → Video ts</span> <span>timestamp_ref links message to video moment</span></div>
+          <div class="rel-row"><span class="rel-badge">User embedding</span> <span>512-dim vector for cosine similarity matching</span></div>
+          <div class="rel-row"><span class="rel-badge">Interest hierarchy</span> <span>parent_id enables "ML → Deep Learning → Transformers"</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Matching Algorithm -->
+  <div id="section-matching" class="section">
+    <div class="algo-container">
+      <div class="algo-card">
+        <div class="algo-card-header">
+          <span style="font-size:16px">⚡</span>
+          <span class="algo-card-title">Matching Signal Weights</span>
+        </div>
+        <div class="algo-card-body">
+          <div class="signal-grid">
+            <div class="signal-item"><span class="signal-name">Topic overlap (cosine sim)</span><span class="signal-weight">40%</span></div>
+            <div class="signal-item"><span class="signal-name">Learning goal alignment</span><span class="signal-weight">25%</span></div>
+            <div class="signal-item"><span class="signal-name">Activity cadence match</span><span class="signal-weight">15%</span></div>
+            <div class="signal-item"><span class="signal-name">Skill level proximity</span><span class="signal-weight">12%</span></div>
+            <div class="signal-item"><span class="signal-name">Time zone / schedule</span><span class="signal-weight">8%</span></div>
+          </div>
+          <div class="score-demo" style="margin-top:16px">
+            <div style="font-size:12px;font-weight:500;margin-bottom:10px;color:var(--txt2)">Live score demo — Arjun K. vs. you</div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-label"><span>Topic overlap</span><span>0.92</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:92%;background:var(--teal)"></div></div>
+            </div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-label"><span>Goal alignment</span><span>0.95</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:95%;background:var(--purple)"></div></div>
+            </div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-label"><span>Activity cadence</span><span>0.88</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:88%;background:var(--blue)"></div></div>
+            </div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-label"><span>Skill level</span><span>0.91</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:91%;background:var(--amber)"></div></div>
+            </div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-label"><span>Schedule overlap</span><span>0.82</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:82%;background:var(--coral)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-header">
+          <span style="font-size:16px">📐</span>
+          <span class="algo-card-title">Scoring Formula</span>
+        </div>
+        <div class="algo-card-body">
+          <div class="formula-box">
+match_score(u1, u2) =<br>
+&nbsp;&nbsp;0.40 × cosine_sim(u1.embedding, u2.embedding)<br>
++ 0.25 × goal_match(u1.learning_goal, u2.learning_goal)<br>
++ 0.15 × cadence_sim(u1.activity_pattern, u2.activity_pattern)<br>
++ 0.12 × skill_proximity(u1, u2)<br>
++ 0.08 × schedule_overlap(u1.timezone, u2.timezone)<br><br>
+<span style="color:var(--txt3)">// embeddings updated nightly via watch history</span><br>
+<span style="color:var(--txt3)">// scores cached in Redis, invalidated on new video upload</span><br>
+<span style="color:var(--txt3)">// group matching: average pairwise score of existing members</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-card">
+          <div class="arch-card-title">🔄 Embedding Pipeline</div>
+          <div class="arch-step"><div class="step-num">1</div><div class="step-text">User watches/uploads video → AI extracts topic tags + concepts</div></div>
+          <div class="arch-step"><div class="step-num">2</div><div class="step-text">Tags mapped onto Interest hierarchy; affinity scored by dwell time</div></div>
+          <div class="arch-step"><div class="step-num">3</div><div class="step-text">User embedding = weighted average of interest embeddings (pgvector)</div></div>
+          <div class="arch-step"><div class="step-num">4</div><div class="step-text">ANN search (HNSW index) finds top-50 candidates in &lt;10ms</div></div>
+          <div class="arch-step"><div class="step-num">5</div><div class="step-text">Full scoring formula re-ranks candidates; top-5 surfaced in UI</div></div>
+        </div>
+        <div class="arch-card">
+          <div class="arch-card-title">🛡️ Privacy Guardrails</div>
+          <div class="arch-step"><div class="step-num">✓</div><div class="step-text">Anonymous mode: embedding computed but identity never revealed to matches</div></div>
+          <div class="arch-step"><div class="step-num">✓</div><div class="step-text">Friends-only: only users with mutual follows enter the candidate pool</div></div>
+          <div class="arch-step"><div class="step-num">✓</div><div class="step-text">Opt-out flips a flag: embedding removed from ANN index within 5 minutes</div></div>
+          <div class="arch-step"><div class="step-num">✓</div><div class="step-text">No raw watch history ever shared — only derived embedding vectors</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Chat Architecture -->
+  <div id="section-chat" class="section">
+    <div class="arch-container">
+      <div class="arch-row">
+        <div class="arch-card">
+          <div class="arch-card-title">🏗️ System Overview</div>
+          <div class="arch-step"><div class="step-num">1</div><div class="step-text"><strong>WebSocket Gateway</strong> — connection manager (Socket.io / Ably). Each user holds one WS connection, multiplexed across rooms.</div></div>
+          <div class="arch-step"><div class="step-num">2</div><div class="step-text"><strong>Room Service</strong> — manages room lifecycle (create, join, leave, archive). Rooms are scoped to topic, group, or video.</div></div>
+          <div class="arch-step"><div class="step-num">3</div><div class="step-text"><strong>Message Bus</strong> — Redis Pub/Sub fans out messages to all subscribers. Guarantees delivery under 100ms p99.</div></div>
+          <div class="arch-step"><div class="step-num">4</div><div class="step-text"><strong>Persistence</strong> — messages written async to Postgres. Timestamps linked to video position for inline Q&A.</div></div>
+          <div class="arch-step"><div class="step-num">5</div><div class="step-text"><strong>AI Moderator</strong> — runs on message stream; auto-generates discussion prompts, flags off-topic drift.</div></div>
+        </div>
+        <div class="arch-card">
+          <div class="arch-card-title">📡 Watch Together Mode</div>
+          <div class="arch-step"><div class="step-num">1</div><div class="step-text">Host creates Watch Room → server assigns a playback session ID</div></div>
+          <div class="arch-step"><div class="step-num">2</div><div class="step-text">All members join via WebSocket; host controls play/pause/seek</div></div>
+          <div class="arch-step"><div class="step-num">3</div><div class="step-text">Sync events broadcast via Room Service with &lt;50ms latency</div></div>
+          <div class="arch-step"><div class="step-num">4</div><div class="step-text">Each member's client applies NTP-style clock correction to stay in sync</div></div>
+          <div class="arch-step"><div class="step-num">5</div><div class="step-text">Timestamp-anchored chat: messages tagged to video position, shown in sidebar</div></div>
+        </div>
+      </div>
+      <div class="chat-mock">
+        <div class="chat-header">
+          <span style="font-size:14px">💬</span>
+          ML Fundamentals — Attention Is All You Need
+          <span style="font-size:11px;color:var(--txt3);margin-left:auto">3 online · watching together</span>
+        </div>
+        <div class="chat-messages">
+          <div class="msg">
+            <div class="msg-avatar" style="background:var(--purple-light);color:var(--purple)">AK</div>
+            <div class="msg-bubble">
+              <div class="msg-sender">Arjun K. <span class="timestamp-badge">@4:32</span></div>
+              <div class="msg-text">Can someone explain why scaled dot-product is better than plain dot product here?</div>
+            </div>
+          </div>
+          <div class="msg msg-ai">
+            <div class="msg-avatar" style="background:var(--purple-light);color:var(--purple);font-size:9px;font-weight:700">AI</div>
+            <div class="msg-bubble">
+              <div class="msg-sender">Recallify AI <span class="ai-badge">prompt</span></div>
+              <div class="msg-text">Without scaling, large d_k values push the softmax into saturation (near-zero gradients). Dividing by √d_k keeps the variance at 1. Can someone explain this in their own words?</div>
+            </div>
+          </div>
+          <div class="msg">
+            <div class="msg-avatar" style="background:var(--teal-light);color:var(--teal-dark)">ML</div>
+            <div class="msg-bubble">
+              <div class="msg-sender">Maya L.</div>
+              <div class="msg-text">Think of it like normalizing your inputs — without it the attention weights collapse to one-hot, which kills the multi-head benefit entirely.</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:10px 16px;border-top:0.5px solid var(--border);display:flex;gap:8px;align-items:center">
+          <div style="flex:1;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--txt3)">Ask a question or explain a concept...</div>
+          <button class="action-btn primary" style="font-size:12px">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: User Flow -->
+  <div id="section-flow" class="section">
+    <div class="flow-container">
+      <div class="flow-steps" id="flow-steps">
+        <!-- Steps rendered by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const steps = [
+  {
+    title: "Upload a video",
+    desc: "User drags a video file or pastes a YouTube link into the Content Sharing tab.",
+    details: [
+      "AI auto-extracts topics and generates tags within 30s",
+      "User reviews tags and can add manual interests",
+      "Visibility set: public / friends-only / private",
+      "AI summary + 3 quiz questions generated in background"
+    ]
+  },
+  {
+    title: "AI enriches the content",
+    desc: "Recallify processes the video and surfaces discussion prompts, summaries, and quizzes ready to share.",
+    details: [
+      "Transcript generated via Whisper",
+      "Key concepts extracted → mapped to Interest hierarchy",
+      "User embedding vector updated nightly (or on demand)",
+      "Study group recommendations refreshed"
+    ]
+  },
+  {
+    title: "Partner & group suggestions appear",
+    desc: "Based on the uploaded topic, matching algorithm surfaces 3 study partners and 2 relevant groups.",
+    details: [
+      "ANN search finds top-50 candidates from embedding index",
+      "Full score computed (topics 40%, goals 25%, cadence 15%, skill 12%, timezone 8%)",
+      "Top 3 partners + 2 groups surfaced in sidebar",
+      "One-click connect request or group join"
+    ]
+  },
+  {
+    title: "Join a study group",
+    desc: "User taps 'Join Group Study' on ML Fundamentals group and enters the live session.",
+    details: [
+      "WebSocket connection established to Room Service",
+      "Room state synced: who's online, current video timestamp",
+      "AI discussion prompt auto-posted to get conversation started",
+      "Watch Together mode available — host can start sync playback"
+    ]
+  },
+  {
+    title: "Chat & learn together",
+    desc: "User asks a question, AI adds a discussion prompt, peers explain concepts, timestamp-linked chat scrolls with the video.",
+    details: [
+      "Messages stored with optional timestamp anchor (e.g. @4:32)",
+      "Helpful explanations earn reputation points (no likes)",
+      "AI moderator detects unanswered questions, nudges experts",
+      "Session ends → AI generates group summary + action items"
+    ]
+  }
+];
+
+let current = 0;
+
+function renderFlow() {
+  const container = document.getElementById('flow-steps');
+  container.innerHTML = '';
+  steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'flow-step' + (i < current ? ' done' : i === current ? ' active' : '');
+    div.innerHTML = `
+      <div class="flow-step-left">
+        <div class="flow-step-circle">${i < current ? '✓' : i + 1}</div>
+        ${i < steps.length - 1 ? `<div class="flow-connector${i < current ? ' done' : ''}"></div>` : ''}
+      </div>
+      <div class="flow-step-right">
+        <div class="flow-step-title">${s.title}</div>
+        <div class="flow-step-desc">${s.desc}</div>
+        <div class="flow-step-detail">
+          <div class="flow-detail-items">
+            ${s.details.map(d => `<div class="flow-detail-item"><div class="flow-check">✓</div><span>${d}</span></div>`).join('')}
+          </div>
+          <div class="flow-nav">
+            ${i > 0 ? `<button class="flow-btn" onclick="setStep(${i - 1})">← Back</button>` : ''}
+            ${i < steps.length - 1 ? `<button class="flow-btn primary" onclick="setStep(${i + 1})">Next step →</button>` : `<button class="flow-btn primary" onclick="setStep(0)">Restart flow ↺</button>`}
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function setStep(i) {
+  current = i;
+  renderFlow();
+}
+
+renderFlow();
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Filter chips
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
