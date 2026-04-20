@@ -33,6 +33,7 @@ try {
 // ============================================================
 
 let currentUser         = null;  // { id, name, email }
+let userProfile         = null;  // { id, is_public, topics, ... }
 let activeRecallEntryId = null;  // UUID string of content row being recalled
 let lastLoggedId        = null;  // UUID string of content row just saved
 let selectedScore       = null;  // integer 1–5
@@ -112,6 +113,11 @@ const recallDoneBtn  = document.getElementById('recall-done-btn');
 const deleteModal   = document.getElementById('delete-modal');
 const deleteCancel  = document.getElementById('delete-cancel');
 const deleteConfirm = document.getElementById('delete-confirm');
+
+// Social Elements
+const socialFeedContainer = document.querySelector('.social-feed');
+const joinSocialBtn       = document.querySelector('.privacy-btn.accept');
+const privacyBanner       = document.querySelector('.privacy-banner');
 
 
 // ============================================================
@@ -231,6 +237,9 @@ function bindEvents() {
       renderLibrary();
     });
   });
+
+  // Social Opt-in
+  joinSocialBtn?.addEventListener('click', handleSocialOptIn);
 
   // Social sub-tabs
   document.querySelectorAll('.social-tab').forEach(tab => {
@@ -393,6 +402,35 @@ async function signOut() {
   showAuthScreen();
 }
 
+async function enterApp() {
+  authScreen.classList.add('hidden');
+  appScreen.classList.remove('hidden');
+  appScreen.classList.add('active');
+
+  // Update UI with user info
+  if (userNameDisplay) userNameDisplay.textContent = currentUser.name;
+  if (userAvatar) userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+
+  // Load profile data (specifically for social privacy status)
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+
+  if (!error && data) {
+    userProfile = data;
+    updateSocialUI();
+  }
+
+  switchView('dashboard');
+}
+
+function updateSocialUI() {
+  if (!userProfile || !privacyBanner) return;
+  userProfile.is_public ? privacyBanner.classList.add('hidden') : privacyBanner.classList.remove('hidden');
+}
+
 function showAuthScreen() {
   appScreen.classList.add('hidden');
   authScreen.classList.remove('hidden');
@@ -401,13 +439,25 @@ function showAuthScreen() {
   document.getElementById('login-password').value = '';
 }
 
-function enterApp() {
-  authScreen.classList.add('hidden');
-  authScreen.classList.remove('active');
-  appScreen.classList.remove('hidden');
-  userNameDisplay.textContent = currentUser.name;
-  userAvatar.textContent      = currentUser.name.charAt(0).toUpperCase();
-  switchView('dashboard');
+async function handleSocialOptIn() {
+  setLoading(joinSocialBtn, true);
+  
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .update({ is_public: true })
+    .eq('id', currentUser.id)
+    .select()
+    .single();
+
+  setLoading(joinSocialBtn, false);
+
+  if (!error) {
+    userProfile = data;
+    updateSocialUI();
+    renderSocialFeed();
+  } else {
+    console.error("Opt-in failed:", error.message);
+  }
 }
 
 
@@ -429,7 +479,7 @@ function switchView(viewName) {
 
   if (viewName === 'dashboard') renderDashboard();
   if (viewName === 'library')   renderLibrary();
-  if (viewName === 'social')    console.log("Social view active"); 
+  if (viewName === 'social')    renderSocialFeed(); 
   if (viewName === 'log')       resetLogForm();
 }
 
@@ -554,6 +604,51 @@ async function getUserEntries() {
   });
 }
 
+async function renderSocialFeed() {
+  if (!socialFeedContainer) return;
+  
+  // Keep the header, clear the cards
+  const header = socialFeedContainer.querySelector('.feed-header');
+  socialFeedContainer.innerHTML = '';
+  if (header) socialFeedContainer.appendChild(header);
+
+  // Fetch content where is_shared = true
+  const { data: sharedItems, error } = await supabaseClient
+    .from('content')
+    .select(`
+      id, title, type, created_at,
+      profiles:user_id ( name )
+    `)
+    .eq('is_shared', true)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error || !sharedItems || sharedItems.length === 0) {
+    socialFeedContainer.innerHTML += `<p class="empty-state">No public study sessions yet. Be the first to share!</p>`;
+    return;
+  }
+
+  sharedItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'video-card'; // Reusing your existing class
+    card.innerHTML = `
+      <div class="video-card-inner">
+        <div class="video-thumb">${typeIcon(item.type)}</div>
+        <div class="video-info">
+          <div class="video-title">${escapeHtml(item.title)}</div>
+          <div class="video-by">shared by ${item.profiles?.name || 'A learner'} · ${formatDate(item.created_at)}</div>
+        </div>
+      </div>
+      <div class="video-footer">
+        <div class="footer-meta"><span>Join this topic to see shared insights</span></div>
+        <div class="footer-actions">
+          <button class="action-btn primary">View Details</button>
+        </div>
+      </div>
+    `;
+    socialFeedContainer.appendChild(card);
+  });
+}
 
 // ============================================================
 // DASHBOARD
