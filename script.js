@@ -235,11 +235,18 @@ function bindEvents() {
   // Social sub-tabs
   document.querySelectorAll('.social-tab').forEach(tab => {
     tab.addEventListener('click', () => {
+      if (!currentUser) return;
       document.querySelectorAll('.social-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.social-sub-view').forEach(v => v.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById('social-' + tab.dataset.sub).classList.add('active');
     });
+  });
+
+  // Social Join Button
+  const joinSocialBtn = document.querySelector('.privacy-btn.accept');
+  joinSocialBtn?.addEventListener('click', () => {
+    handleJoinSocial();
   });
 
   // Recall modal
@@ -429,7 +436,7 @@ function switchView(viewName) {
 
   if (viewName === 'dashboard') renderDashboard();
   if (viewName === 'library')   renderLibrary();
-  if (viewName === 'social')    console.log("Social view active"); 
+  if (viewName === 'social')    renderSocial(); 
   if (viewName === 'log')       resetLogForm();
 }
 
@@ -554,6 +561,37 @@ async function getUserEntries() {
   });
 }
 
+// ============================================================
+// SOCIAL
+// ============================================================
+
+async function renderSocial() {
+  // Check if user has opted in (you could store this in Supabase user_metadata)
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const isOptedIn = user?.user_metadata?.social_opted_in;
+
+  const privacyBanner = document.querySelector('.privacy-banner');
+  if (isOptedIn) {
+    privacyBanner.classList.add('hidden');
+  } else {
+    privacyBanner.classList.remove('hidden');
+  }
+}
+
+async function handleJoinSocial() {
+  // Update Supabase metadata to persist the choice
+  const { error } = await supabaseClient.auth.updateUser({
+    data: { social_opted_in: true }
+  });
+
+  if (error) {
+    console.error("Error joining social:", error.message);
+    return;
+  }
+
+  // Refresh the social view
+  renderSocial();
+}
 
 // ============================================================
 // DASHBOARD
