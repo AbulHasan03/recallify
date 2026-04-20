@@ -85,6 +85,9 @@
         <li><button class="nav-btn" data-view="library">
           <span class="nav-icon">≡</span> My Library
         </button></li>
+        <li><button class="nav-btn" data-view="social">
+          <span class="nav-icon">🌍</span> Social
+        </button></li>
       </ul>
       <div class="sidebar-footer">
         <div class="user-info">
@@ -217,6 +220,165 @@
 
         <div id="library-list" class="library-list">
           <p class="empty-state">Your library is empty. Go log some content!</p>
+        </div>
+      </section>
+
+      <!-- ---- SOCIAL VIEW ---- -->
+      <section class="view hidden" id="view-social">
+        <div class="social-feature-container">
+          <div class="social-nav">
+            <div class="social-tabs">
+              <button class="social-tab active" data-sub="overview">Feed</button>
+              <button class="social-tab" data-sub="datamodel">Data Model</button>
+              <button class="social-tab" data-sub="matching">Matching</button>
+              <button class="social-tab" data-sub="chat">Chat Arch</button>
+              <button class="social-tab" data-sub="flow">User Flow</button>
+            </div>
+          </div>
+
+          <!-- Sub-Section: Overview -->
+          <div id="social-overview" class="social-sub-view active">
+            <div class="privacy-banner">
+              <div class="privacy-icon">🔒</div>
+              <div class="privacy-text">Social features are <strong>opt-in</strong>. Your learning activity stays private until you choose to share.</div>
+              <div class="privacy-btns">
+                <button class="privacy-btn">Settings</button>
+                <button class="privacy-btn accept">Join Social</button>
+              </div>
+            </div>
+            <div class="overview-grid">
+              <div class="social-sidebar">
+                <div class="sidebar-block">
+                  <div class="sidebar-label">Suggested Partners</div>
+                  <div class="match-list">
+                    <div class="match-card">
+                      <div class="match-avatar" style="background:#EEEDFE;color:#534AB7">AK</div>
+                      <div class="match-info">
+                        <div class="match-name">Arjun K.</div>
+                        <div class="match-topics">ML, Linear Algebra</div>
+                      </div>
+                      <span class="match-score">94%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="sidebar-block">
+                  <div class="sidebar-label">Active Groups</div>
+                  <div class="group-card">
+                    <div class="group-header">
+                      <span class="group-name">ML Fundamentals</span>
+                      <span class="group-live"><span class="live-dot"></span>Live</span>
+                    </div>
+                    <div class="group-meta">12 members · 3 online</div>
+                  </div>
+                </div>
+              </div>
+              <div class="social-feed">
+                <div class="feed-header">
+                  <span class="feed-title">Learning Feed</span>
+                </div>
+
+                <div class="video-card">
+                  <div class="video-card-inner">
+                    <div class="video-thumb" style="background:var(--amber-pale)">🧠</div>
+                    <div class="video-info">
+                      <div class="video-title">Attention is All You Need — Annotated</div>
+                      <div class="video-by">shared by Arjun K. · 3h ago</div>
+                      <div class="tag-row">
+                        <span class="tag social-tag-ml">machine learning</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="video-footer">
+                    <div class="footer-meta"><span>14 learners</span><span>6 discussions</span></div>
+                    <div class="footer-actions">
+                      <button class="action-btn">Add Note</button>
+                      <button class="action-btn primary">Join Study</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Section: Data Model (Technical Info) -->
+          <div id="social-datamodel" class="social-sub-view">
+            <div class="technical-container">
+              <h3 class="section-title">Backend Architecture</h3>
+              <p class="view-subtitle">Proposed Supabase extensions for social functionality.</p>
+              <div class="dm-grid">
+                <div class="entity-card">
+                  <div class="entity-header">👤 User Profile</div>
+                  <div class="entity-fields">
+                    <div class="field-row"><span>privacy_mode</span><span class="field-type">enum</span></div>
+                    <div class="field-row"><span>embedding_vec</span><span class="field-type">pgvector</span></div>
+                  </div>
+                </div>
+                <div class="entity-card">
+                  <div class="entity-header">👥 Study Groups</div>
+                  <div class="entity-fields">
+                    <div class="field-row"><span>is_live</span><span class="field-type">bool</span></div>
+                    <div class="field-row"><span>topic_ids</span><span class="field-type">uuid[]</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Section: Matching -->
+          <div id="social-matching" class="social-sub-view">
+            <div class="technical-container">
+              <h3 class="section-title">Matching Algorithm</h3>
+              <div class="formula-box">
+                match_score = 0.40 × topic_overlap + 0.25 × goal_alignment + 0.15 × activity_cadence
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Section: Chat Arch -->
+          <div id="social-chat" class="social-sub-view">
+            <div class="chat-mock">
+              <div class="chat-header">💬 ML Fundamentals Room</div>
+              <div class="chat-messages">
+                <div class="msg">
+                  <div class="msg-avatar">AK</div>
+                  <div class="msg-bubble">
+                    <div class="msg-sender">Arjun K.</div>
+                    <div class="msg-text">How does the scaling factor work in attention?</div>
+                  </div>
+                </div>
+                <div class="msg msg-ai">
+                  <div class="msg-avatar">AI</div>
+                  <div class="msg-bubble">
+                    <div class="msg-sender">Recallify AI</div>
+                    <div class="msg-text">It prevents the dot product from growing too large in high dimensions.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Section: User Flow -->
+          <div id="social-flow" class="social-sub-view">
+            <div class="flow-container">
+              <div class="flow-steps">
+                <div class="flow-step done">
+                  <div class="flow-step-circle">1</div>
+                  <div class="flow-step-right">
+                    <div class="flow-step-title">Upload & Enrich</div>
+                    <div class="flow-step-desc">AI extracts topics and updates your interest vector.</div>
+                  </div>
+                </div>
+                <div class="flow-step active">
+                  <div class="flow-step-circle">2</div>
+                  <div class="flow-step-right">
+                    <div class="flow-step-title">Match & Connect</div>
+                    <div class="flow-step-desc">System finds peers studying similar material.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
